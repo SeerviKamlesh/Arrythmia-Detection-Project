@@ -1,0 +1,50 @@
+clc;
+close all;
+clear all;
+warning off all;
+[filename, pathname]=uigetfile('*.txt;','Select ECG ref Signal');
+file=strcat(pathname,filename);
+input_signals=load(file);         
+S_data=input_signals;    
+input_signal=S_data';       
+figure;
+plot(input_signal);
+title('Input Raw');
+grid on;axis on;
+[input_signals, input_avg] = avg_vect(input_signal);
+ h = fspecial('average',[10 10]);
+               Lin_filt =filter2(h,input_signals);
+               figure;
+plot(Lin_filt);
+title('Filtered');
+grid on;axis on;
+[Dim, NumOfSampl] = size(input_signals);
+modurater           = 'on';
+eig_vect          = 1;      
+eig_vect_end           = Dim;
+          
+ peaks_sigl=lms(Lin_filt);
+    figure;
+plot(peaks_sigl);
+title('Smoothed');
+grid on;axis on;
+  [feature1,l] = wavedec(peaks_sigl,3,'haar');
+[evalu, dist_vet]=pca_mat(input_signals, eig_vect, eig_vect_end, modurater);
+[scrambl_daq, scrambl_seq, scrambl_seq_decode] = scraml(input_signals, evalu, dist_vet, modurater);
+ peaks_sig1=qrs_sub(peaks_sigl);
+ feature2= Higuchi_FD(peaks_sigl,10); 
+  Fea=[mean(feature2')' feature2];
+                 class=[0 1];
+                 trfeat=Fea;
+                 lab=class;
+           % [result,thrsh ] = msvm(trfeat,lab(1:length(trfeat)),peaks_sigl);
+           [result,thrsh,para ] = msvm(trfeat,lab,peaks_sig1);
+           if thrsh>.05
+               msgbox('Normal Signal');
+           else
+                msgbox('ARTHYMIAS Detected');
+           end
+           fprintf('Accuracy = %f\n',para(1));
+fprintf('Specifity = %f\n',para(2));
+fprintf('Sensitivity = %f\n',para(3));
+fprintf('Precision = %f\n',para(4));
